@@ -41,7 +41,7 @@ def consumir_newsapi_por_fuente_lote(fuentes_lote):
     params = {
         "apiKey": NEWSAPI_KEY,
         "sources": joined_sources,
-        "pageSize": 100
+        "language": 'en'
     }
     response = requests.get(url, params=params)
     if response.status_code != 200:
@@ -58,6 +58,14 @@ def analizar_sentimiento(texto):
         return 'negativo', round(polaridad, 3)
     else:
         return 'neutral', round(polaridad, 3)
+
+def extraer_etiquetas(texto, min_score=0.2, top_n=5):
+    kw_model = KeyBERT()
+    resultados = kw_model.extract_keywords(texto, keyphrase_ngram_range=(1, 3), stop_words='english', top_n=top_n)
+    
+    etiquetas_filtradas = [kw for kw, score in resultados if score >= min_score]
+    
+    return etiquetas_filtradas
 
 def insertar_noticia(article):
     try:
@@ -76,6 +84,7 @@ def insertar_noticia(article):
         autores = [a.strip() for a in autores_raw.split(",")] if autores_raw else []
 
         sentimiento, puntuacion = analizar_sentimiento(titulo)
+        etiquetas = extraer_etiquetas(texto)
 
         # Llamar a la función PostgreSQL que devuelve una tabla
         response = supabase.rpc("insertar_noticia_completa", {

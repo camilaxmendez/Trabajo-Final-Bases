@@ -2,6 +2,8 @@ import requests
 from textblob import TextBlob
 from supabase import create_client, Client, SupabaseException
 from datetime import datetime
+from keybert import KeyBERT
+from difflib import get_close_matches
 
 # Configuración
 SUPABASE_URL = "https://rhwfspmgxlvjvpwgrqdo.supabase.co"
@@ -11,7 +13,7 @@ NEWSAPI_KEY = "8a3c1aa5081347b790ffe520bbb21594"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 #CATEGORIAS = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology']
-CATEGORIAS = ['sports']
+CATEGORIAS = ['business', 'entertainment', 'general', 'health', 'science', 'technology']
 
 LANG = 'en'
 
@@ -24,6 +26,31 @@ def analizar_sentimiento(texto):
         return 'negativo', round(polaridad, 3)
     else:
         return 'neutral', round(polaridad, 3)
+
+def extraer_etiquetas(texto, min_score=0.2, top_n=5, similitud_min=0.85):
+    kw_model = KeyBERT()
+    resultados = kw_model.extract_keywords(
+        texto,
+        keyphrase_ngram_range=(1, 1),
+        stop_words='english',
+        top_n=top_n * 2  # Obtener más para luego filtrar
+    )
+    
+    # Filtrar por score y normalizar
+    etiquetas = [kw.lower() for kw, score in resultados if score >= min_score]
+
+    # Eliminar duplicados exactos
+    unicas = list(set(etiquetas))
+
+    # Filtrar por similitud para evitar términos casi iguales
+    final = []
+    for etiqueta in unicas:
+        if not get_close_matches(etiqueta, final, cutoff=similitud_min):
+            final.append(etiqueta)
+
+    # Limitar al top_n final
+    return final[:top_n]
+
 
 def obtener_noticias(categoria):
     url = "https://newsapi.org/v2/top-headlines"
@@ -59,6 +86,9 @@ def insertar_noticia(article, categoria):
 
         sentimiento, puntuacion = analizar_sentimiento(titulo)
 
+        texto = f"{titulo}. {descripcion}"
+        etiquetas = extraer_etiquetas(texto)
+        
         # Llamar a la función PostgreSQL que devuelve una tabla
         response = supabase.rpc("insertar_noticia_completa", {
             "p_titulo": titulo,
@@ -71,7 +101,7 @@ def insertar_noticia(article, categoria):
             "p_fuente_nombre": fuente_nombre,
             "p_fuente_id_api": fuente_id_api,
             "p_autores": autores,
-            "p_etiquetas": [],
+            "p_etiquetas": etiquetas,
             "p_sentimiento_nombre": sentimiento,
             "p_sentimiento_puntuacion": puntuacion
         }).execute()
