@@ -53,6 +53,7 @@ pg = st.navigation(
 st.sidebar.text("Realizado por: Camila Méndez y Carlos Gómez")
 
 if 'usuario_simulado' not in st.session_state:
+    print("Agregado")
     st.session_state.usuario_simulado = "usuario_a"
 
 usuario = st.sidebar.selectbox(
