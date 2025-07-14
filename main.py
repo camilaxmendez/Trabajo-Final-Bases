@@ -52,4 +52,15 @@ pg = st.navigation(
 #st.logo("assets/codingisfun_logo.png")
 st.sidebar.text("Realizado por: Camila Méndez y Carlos Gómez")
 
+if 'usuario_simulado' not in st.session_state:
+    st.session_state.usuario_simulado = "usuario_a"
+
+usuario = st.sidebar.selectbox(
+    "Selecciona un usuario",
+    ["usuario_a", "usuario_b", "usuario_c"],
+    index=["usuario_a", "usuario_b", "usuario_c"].index(st.session_state.usuario_simulado)
+)
+
+st.session_state.usuario_simulado = usuario
+
 pg.run()

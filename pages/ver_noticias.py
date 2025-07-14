@@ -136,17 +136,25 @@ else:
             
             # Acciones como enlaces
             with cols[6]:
-                col1, col2, col3, col4 = st.columns(4)
+                col1, col2, col3 = st.columns(3)
                 with col1:
                     st.button("👁️",key=f"ver_{row}",on_click=ver_noticia, kwargs={"id_noticia": row["id"]})
                 with col2:
                     st.button("✏️",key=f"editar_{row}",on_click=editar_noticia, kwargs={"id_noticia": row["id"]})
-
                 with col3:
-                    st.button("🏷️",key=f"etiqueta_{row}")
-
-                with col4:
                     st.button("🗑️",key=f"eliminar_{row}",on_click=eliminar_noticia, kwargs={"id_noticia": row["id"]})
+
+                #col1, col2, col3, col4 = st.columns(4)
+                #with col1:
+                #    st.button("👁️",key=f"ver_{row}",on_click=ver_noticia, kwargs={"id_noticia": row["id"]})
+                #with col2:
+                #    st.button("✏️",key=f"editar_{row}",on_click=editar_noticia, kwargs={"id_noticia": row["id"]})
+
+                #with col3:
+                #    st.button("🏷️",key=f"etiqueta_{row}")
+
+                #with col4:
+                #    st.button("🗑️",key=f"eliminar_{row}",on_click=eliminar_noticia, kwargs={"id_noticia": row["id"]})
 
                 
                 

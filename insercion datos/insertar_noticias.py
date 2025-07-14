@@ -13,7 +13,7 @@ NEWSAPI_KEY = "8a3c1aa5081347b790ffe520bbb21594"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 #CATEGORIAS = ['business', 'entertainment', 'general', 'health', 'science', 'sports', 'technology']
-CATEGORIAS = ['business', 'entertainment', 'general', 'health', 'science', 'technology']
+CATEGORIAS = ['sports']
 
 LANG = 'en'
 

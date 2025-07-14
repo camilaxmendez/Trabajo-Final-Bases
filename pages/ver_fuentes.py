@@ -14,8 +14,6 @@ st.set_page_config(layout="wide")
 @st.dialog("Editar fuente")
 def editar_fuente(id_fuente):
     fuente = obtener_fuente_por_id(id_fuente)
-    print("-----------------")
-    print(fuente)
     editar_fuente_form(fuente)
 
 @st.dialog("Detalles fuente")
