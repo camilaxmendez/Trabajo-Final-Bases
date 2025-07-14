@@ -14,7 +14,9 @@ st.set_page_config(layout="wide")
 @st.dialog("Editar fuente")
 def editar_fuente(id_fuente):
     fuente = obtener_fuente_por_id(id_fuente)
-    datos_noticias_form(fuente)
+    print("-----------------")
+    print(fuente)
+    editar_fuente_form(fuente)
 
 @st.dialog("Detalles fuente")
 def ver_fuente(id_fuente):
@@ -85,7 +87,7 @@ def eliminar_fuente(id_fuente: int, eliminar: bool = True) -> bool:
         response = supabase.rpc(
             'eliminar_fuente',
             {
-                'fuente_id': id_noticia,
+                'fuente_id': id_fuente,
                 'eliminar': eliminar
             }
         ).execute()
