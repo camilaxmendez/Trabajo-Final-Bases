@@ -3,6 +3,9 @@ import requests
 from itertools import islice
 from datetime import datetime
 from textblob import TextBlob
+from keybert import KeyBERT
+from difflib import get_close_matches
+from datetime import datetime, timedelta
 
 # Configuración
 SUPABASE_URL = "https://rhwfspmgxlvjvpwgrqdo.supabase.co"
@@ -10,7 +13,6 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 NEWSAPI_KEY = "8a3c1aa5081347b790ffe520bbb21594"
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-
 
 def obtener_fuentes_con_id_api():
     try:
@@ -36,12 +38,21 @@ def dividir_en_lotes(lista, tamaño):
 # === 2. Llamar a NewsAPI ===
 def consumir_newsapi_por_fuente_lote(fuentes_lote):
     joined_sources = ",".join(fuentes_lote)
-    print(f"-----Fuentes: {joined_sources}\n")
+
+    hoy = datetime.utcnow().date()
+    ayer = hoy - timedelta(days=1)
+
     url = "https://newsapi.org/v2/everything"
     params = {
         "apiKey": NEWSAPI_KEY,
         "sources": joined_sources,
-        "language": 'en'
+        "language": 'en',
+        "from": '2025-06-14',
+        "to": '2025-07-12',  # Excluyente, por eso usamos hoy como límite superior
+        "sortBy": "popularity"
+        #"from": ayer.isoformat(),
+        #"to": hoy.isoformat(),  # Excluyente, por eso usamos hoy como límite superior
+        #"sortBy": "publishedAt"
     }
     response = requests.get(url, params=params)
     if response.status_code != 200:
@@ -59,13 +70,29 @@ def analizar_sentimiento(texto):
     else:
         return 'neutral', round(polaridad, 3)
 
-def extraer_etiquetas(texto, min_score=0.2, top_n=5):
+def extraer_etiquetas(texto, min_score=0.2, top_n=5, similitud_min=0.85):
     kw_model = KeyBERT()
-    resultados = kw_model.extract_keywords(texto, keyphrase_ngram_range=(1, 3), stop_words='english', top_n=top_n)
+    resultados = kw_model.extract_keywords(
+        texto,
+        keyphrase_ngram_range=(1, 1),
+        stop_words='english',
+        top_n=top_n * 2  # Obtener más para luego filtrar
+    )
     
-    etiquetas_filtradas = [kw for kw, score in resultados if score >= min_score]
-    
-    return etiquetas_filtradas
+    # Filtrar por score y normalizar
+    etiquetas = [kw.lower() for kw, score in resultados if score >= min_score]
+
+    # Eliminar duplicados exactos
+    unicas = list(set(etiquetas))
+
+    # Filtrar por similitud para evitar términos casi iguales
+    final = []
+    for etiqueta in unicas:
+        if not get_close_matches(etiqueta, final, cutoff=similitud_min):
+            final.append(etiqueta)
+
+    # Limitar al top_n final
+    return final[:top_n]
 
 def insertar_noticia(article):
     try:
@@ -84,6 +111,8 @@ def insertar_noticia(article):
         autores = [a.strip() for a in autores_raw.split(",")] if autores_raw else []
 
         sentimiento, puntuacion = analizar_sentimiento(titulo)
+
+        texto = f"{titulo}. {descripcion}"
         etiquetas = extraer_etiquetas(texto)
 
         # Llamar a la función PostgreSQL que devuelve una tabla
@@ -98,7 +127,7 @@ def insertar_noticia(article):
             "p_fuente_nombre": fuente_nombre,
             "p_fuente_id_api": fuente_id_api,
             "p_autores": autores,
-            "p_etiquetas": [],
+            "p_etiquetas": etiquetas,
             "p_sentimiento_nombre": sentimiento,
             "p_sentimiento_puntuacion": puntuacion
         }).execute()
