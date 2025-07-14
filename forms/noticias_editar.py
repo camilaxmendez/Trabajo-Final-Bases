@@ -8,6 +8,24 @@ SUPABASE_URL = "https://rhwfspmgxlvjvpwgrqdo.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJod2ZzcG1neGx2anZwd2dycWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4MjQwODQsImV4cCI6MjA2NzQwMDA4NH0.cefHhgH8bwePEVXohFiykb46Zt849RoJshSiqzbYkbY"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
+def obtener_fuentes_activas() -> dict:
+    try:
+        # Ejecutar la función PostgreSQL
+        response = supabase.rpc(
+            'obtener_fuentes_activas'
+        ).execute()
+        
+        # Verificar si se encontraron resultados
+        if response.data and len(response.data) > 0:
+            return response.data  # Retorna el primer resultado (debería ser único)
+        else:
+            return None
+            
+    except Exception as e:
+        st.error(f"Error al obtener noticia: {e}")
+        return None
+
+
 def editar_noticias_form(noticia):
     # === Cargar fuentes ===
     fuentes = obtener_fuentes_activas()

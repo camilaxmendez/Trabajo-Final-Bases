@@ -14,7 +14,7 @@ st.set_page_config(layout="wide")
 @st.dialog("Editar noticia")
 def editar_noticia(id_noticia):
     noticia = obtener_noticia_por_id(id_noticia)
-    datos_noticias_form(noticia)
+    editar_noticias_form(noticia)
 
 @st.dialog("Detalles noticia")
 def ver_noticia(id_noticia):
@@ -63,23 +63,6 @@ def obtener_noticia_por_id(id_noticia: int) -> dict:
         st.error(f"Error al obtener noticia: {e}")
         return None
 
-def obtener_fuentes_activas() -> dict:
-    try:
-        # Ejecutar la función PostgreSQL
-        response = supabase.rpc(
-            'obtener_fuentes_activas'
-        ).execute()
-        
-        # Verificar si se encontraron resultados
-        if response.data and len(response.data) > 0:
-            return response.data  # Retorna el primer resultado (debería ser único)
-        else:
-            return None
-            
-    except Exception as e:
-        st.error(f"Error al obtener noticia: {e}")
-        return None
-
 def eliminar_noticia(id_noticia: int, eliminar: bool = True) -> bool:
     try:
         # Llamar a la función PostgreSQL a través de Supabase
@@ -94,7 +77,6 @@ def eliminar_noticia(id_noticia: int, eliminar: bool = True) -> bool:
     except Exception as e:
         st.error(f"❌ Error al {'eliminar' if eliminar else 'recuperar'} la noticia: {str(e)}")
         return False
-
 
 # === Tabla de noticias principal ===
 st.title("📰 Tabla de Noticias")
