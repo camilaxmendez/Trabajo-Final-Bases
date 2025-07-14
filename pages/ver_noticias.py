@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 from supabase import create_client, Client
-from forms.noticias_form import datos_noticias_form
+from forms.noticias_editar import editar_noticias_form
 from forms.noticias_info import info_noticias_form
 
 # === Conexión Supabase ===
@@ -10,14 +10,15 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 st.set_page_config(layout="wide")
-params = st.query_params
 
 @st.dialog("Editar noticia")
-def editar_noticia_form(noticia, opciones_fuentes, fuente_actual, categorias_validas, cat_idx):
-    datos_noticias_form(noticia, opciones_fuentes, fuente_actual, categorias_validas, cat_idx)
+def editar_noticia(id_noticia):
+    noticia = obtener_noticia_por_id(id_noticia)
+    datos_noticias_form(noticia)
 
 @st.dialog("Detalles noticia")
-def mostrar_noticia(noticia):
+def ver_noticia(id_noticia):
+    noticia = obtener_noticia_por_id(id_noticia)
     info_noticias_form(noticia)
 
 # === Obtener noticias y fuentes ===
@@ -79,25 +80,6 @@ def obtener_fuentes_activas() -> dict:
         st.error(f"Error al obtener noticia: {e}")
         return None
 
-def ver_noticia(id_noticia):
-    noticia = obtener_noticia_por_id(id_noticia)
-    mostrar_noticia(noticia)
-
-def editar_noticia(id_noticia):
-    # === Cargar fuentes ===
-    noticia = obtener_noticia_por_id(id_noticia)
-    fuentes = obtener_fuentes_activas()
-    print(f"Tipo de 'fuentes': {type(fuentes)}")
-    print(f"Contenido de 'fuentes': {fuentes}")
-    opciones_fuentes = {f["nombre"]: f["id"] for f in fuentes}
-    fuente_actual = next((k for k, v in opciones_fuentes.items() if v == noticia["fuente_id"]), list(opciones_fuentes.keys())[0])
-
-    categorias_validas = [
-        "business", "entertainment", "general", "health", "science", "sports", "technology"
-    ]
-    cat_idx = categorias_validas.index(noticia["categoria"]) if noticia["categoria"] in categorias_validas else 0
-    editar_noticia_form(noticia, opciones_fuentes, fuente_actual, categorias_validas, cat_idx)
-
 def eliminar_noticia(id_noticia: int, eliminar: bool = True) -> bool:
     try:
         # Llamar a la función PostgreSQL a través de Supabase
@@ -117,7 +99,6 @@ def eliminar_noticia(id_noticia: int, eliminar: bool = True) -> bool:
 # === Tabla de noticias principal ===
 st.title("📰 Tabla de Noticias")
 st.markdown("### 📋 Noticias registradas")
-import streamlit as st
 
 # Configuración de paginación
 if 'current_page' not in st.session_state:

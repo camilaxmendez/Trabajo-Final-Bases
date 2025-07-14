@@ -8,7 +8,17 @@ SUPABASE_URL = "https://rhwfspmgxlvjvpwgrqdo.supabase.co"
 SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJod2ZzcG1neGx2anZwd2dycWRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE4MjQwODQsImV4cCI6MjA2NzQwMDA4NH0.cefHhgH8bwePEVXohFiykb46Zt849RoJshSiqzbYkbY"
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-def datos_noticias_form(noticia, opciones_fuentes, fuente_actual, categorias_validas, cat_idx):
+def editar_noticias_form(noticia):
+    # === Cargar fuentes ===
+    fuentes = obtener_fuentes_activas()
+    opciones_fuentes = {f["nombre"]: f["id"] for f in fuentes}
+    fuente_actual = next((k for k, v in opciones_fuentes.items() if v == noticia["fuente_id"]), list(opciones_fuentes.keys())[0])
+
+    categorias_validas = [
+        "business", "entertainment", "general", "health", "science", "sports", "technology"
+    ]
+    cat_idx = categorias_validas.index(noticia["categoria"]) if noticia["categoria"] in categorias_validas else 0
+    
     with st.form("noticias_form"):
         nuevo_titulo = st.text_input("📰 Título", value=noticia["titulo"] or "")
         nueva_desc = st.text_area("📝 Descripción", value=noticia["descripcion"] or "")
